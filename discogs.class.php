@@ -1,21 +1,41 @@
 <?php
 
+/*
+Date        Version  Change
+----------  -------  --------------------------------------------------
+              1.0
+2019-01-04    1.1    Added prototypes
+                     No longer builds url, uses tinyUrl class to do so
+*/
+
 class discogs
 {
 	private $json;
+	private $queryArray;
+	protected $urlObject;
 	private $url;
 
 	public function
-	__construct($id)
+	__construct()
 	{
+		$this->urlObject = new tinyUrl('https://api.discogs.com');
+		$this->queryArray = [ ];
 	}
 
 	protected function
-	query (string $url, bool $useauth = false): void
+	addParm ($name, $value)
 	{
-		$this->url = 'https://api.discogs.com' . $url;
+		$this -> queryArray[$name] = $value;
+	}
+
+	protected function
+	query (bool $useauth = false): void
+	{
 		if ($useauth)
-			$this->url .= '&token=' . 'ADGlxSIfGRJkstFhoFDROWlgXiPWaQNgfOroeHOK';
+			$this->addParm ( 'token' , 'ADGlxSIfGRJkstFhoFDROWlgXiPWaQNgfOroeHOK');
+		$this -> urlObject -> setQuery ($this -> queryArray);
+		$this -> url = $this -> urlObject -> getUrl();
+
 		$user_agent = 'FooBarApp/3.0';
 
 		$r = new tinyHttp($this->url);
@@ -35,9 +55,7 @@ $r->setHeader ('Host', 'api.discogs.com');
 
 		$status = $response->getStatus();
 		if ($status != 200)
-		{
 			throw new Exception ('HTTP code ' . $status);
-		}
 
 		$this -> json = $response->getBody();
 	}
@@ -61,10 +79,14 @@ class discogs_search extends discogs
 	private $profile;
 
 	public function
-	__construct($q, $type = 'artist')
+	__construct(string $q, $type = 'artist')
 	{
+		parent::__construct();
 		$this -> q = $q;
-		$this -> query ('/database/search?q='. urlencode($q) . '&type=' . $type, true);
+		$this -> urlObject -> setPath ('/database/search');
+		$this -> addParm ('q' , $q );
+		$this -> addParm ('type' , $type );
+		$this -> query (true);
 
 		$this -> profile = json_decode ($this -> getJson());
 		if (!isset ($this->profile))
@@ -72,7 +94,7 @@ class discogs_search extends discogs
 	}
 
 	public function
-	getProfile()
+	getProfile(): Object
 	{
 		return $this -> profile;
 	}
@@ -84,10 +106,12 @@ class discogs_artist extends discogs
 	private $profile;
 
 	public function
-	__construct($id)
+	__construct(int $id)
 	{
+		parent::__construct();
 		$this -> id = $id;
-		$this -> query ('/artists/'. $id, false);
+		$this -> urlObject -> setPath ('/artists/'. $id);
+		$this -> query (false);
 
 		$this -> profile = json_decode ($this -> getJson());
 		if (!isset ($this->profile))
@@ -95,7 +119,7 @@ class discogs_artist extends discogs
 	}
 
 	public function
-	getProfile()
+	getProfile(): Object
 	{
 		return $this -> profile;
 	}

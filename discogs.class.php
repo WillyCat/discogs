@@ -6,6 +6,7 @@ Date        Version  Change
               1.0
 2019-01-04    1.1    Added prototypes
                      No longer builds url, uses tinyUrl class to do so
+2022-08-24    1.2    Split code, 1 file per class
 */
 
 class discogs
@@ -70,58 +71,6 @@ $r->setHeader ('Host', 'api.discogs.com');
 	getJson(): string
 	{
 		return $this -> json;
-	}
-}
-
-class discogs_search extends discogs
-{
-	private $q;
-	private $profile;
-
-	public function
-	__construct(string $q, $type = 'artist')
-	{
-		parent::__construct();
-		$this -> q = $q;
-		$this -> urlObject -> setPath ('/database/search');
-		$this -> addParm ('q' , $q );
-		$this -> addParm ('type' , $type );
-		$this -> query (true);
-
-		$this -> profile = json_decode ($this -> getJson());
-		if (!isset ($this->profile))
-			throw new Exception ('Retrieval failure');
-	}
-
-	public function
-	getProfile(): Object
-	{
-		return $this -> profile;
-	}
-}
-
-class discogs_artist extends discogs
-{
-	private $id;
-	private $profile;
-
-	public function
-	__construct(int $id)
-	{
-		parent::__construct();
-		$this -> id = $id;
-		$this -> urlObject -> setPath ('/artists/'. $id);
-		$this -> query (false);
-
-		$this -> profile = json_decode ($this -> getJson());
-		if (!isset ($this->profile))
-			throw new Exception ('Retrieval failure');
-	}
-
-	public function
-	getProfile(): Object
-	{
-		return $this -> profile;
 	}
 }
 
